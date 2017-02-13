@@ -1,0 +1,7 @@
+{
+    "ignore":[
+        "static/bundle.js", 
+        "static/bundle.css", 
+        "src/**/*.marko.js"
+    ]
+}

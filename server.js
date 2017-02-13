@@ -7,9 +7,9 @@ function requireNoOp(module, filename) { /* no-op */ }
 require.extensions['.less'] = requireNoOp;
 require.extensions['.css'] = requireNoOp;
 
-var express = require('express');
-var compression = require('compression'); // Provides gzip compression for the HTTP response
-var serveStatic = require('serve-static');
+const express = require('express');
+const compression = require('compression'); // Provides gzip compression for the HTTP response
+const serveStatic = require('serve-static');
 
 // If the process was started using browser-refresh then enable
 // hot reloading for certain types of files to short-circuit
@@ -17,30 +17,35 @@ var serveStatic = require('serve-static');
 // in development: https://www.npmjs.com/package/browser-refresh
 require('marko/browser-refresh').enable();
 
-var app = express();
-
-var port = process.env.PORT || 8080;
-
+const contentType = require('./middlewares/contentType');
+const fs = require('fs');
+const pages = fs.readdirSync('./src/pages');
+const app = express();
+const port = process.env.PORT || 8080;
 // Enable gzip compression for all HTTP responses
 app.use(compression());
 
 // Allow all of the generated files under "static" to be served up by Express
 app.use('/static', serveStatic(__dirname + '/static'));
+app.use('/', serveStatic(__dirname + '/'));
 
-require('src/services/routes')(app);
+//set content-type html
+app.use(contentType);
 
 // Map the "/" route to the home page
-app.get('/', require('src/pages/home'));
+app.get(`/`, require(`src/pages/home`))
+
+//map more routes to the router
+pages.map(page => app.get(`/${page}`, require(`src/pages/${page}`)))
 
 app.listen(port, function(err) {
-    if (err) {
-        throw err;
-    }
-    console.log('Listening on port %d', port);
-
-    // The browser-refresh module uses this event to know that the
-    // process is ready to serve traffic after the restart
-    if (process.send) {
-        process.send('online');
-    }
+  if (err) {
+    throw err;
+  }
+  console.log('Listening on port %d', port);
+  // The browser-refresh module uses this event to know that the
+  // process is ready to serve traffic after the restart
+  if (process.send) {
+    process.send('online');
+  }
 });
